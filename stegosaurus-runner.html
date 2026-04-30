@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stegosaurus Runner - 2.5D Dino Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            width: 900px;
+            height: 500px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 50%, #90EE90 50%, #228B22 100%);
+            border-radius: 15px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 0 0 10px rgba(255, 255, 255, 0.1),
+                inset 0 0 100px rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+
+        .sky {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(to bottom, #4A90E2 0%, #87CEEB 100%);
+            z-index: 1;
+        }
+
+        .sun {
+            position: absolute;
+            top: 30px;
+            right: 80px;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #FFD700 0%, #FFA500 70%, transparent 100%);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 40px #FFD700,
+                0 0 80px #FFA500,
+                0 0 120px rgba(255, 215, 0, 0.5);
+            z-index: 2;
+            animation: sunPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes sunPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.9; }
+        }
+
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50px;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.1),
+                inset 0 -5px 20px rgba(0, 0, 0, 0.05);
+            z-index: 3;
+            animation: floatCloud linear infinite;
+        }
+
+        .cloud::before,
+        .cloud::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+        }
+
+        .cloud::before {
+            width: 30px;
+            height: 30px;
+            top: -15px;
+            left: 10px;
+        }
+
+        .cloud::after {
+            width: 25px;
+            height: 25px;
+            top: -10px;
+            right: 10px;
+        }
+
+        @keyframes floatCloud {
+            from { transform: translateX(-100px); }
+            to { transform: translateX(1000px); }
+        }
+
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(to bottom, #90EE90 0%, #228B22 30%, #006400 100%);
+            z-index: 4;
+        }
+
+        .ground-line {
+            position: absolute;
+            bottom: 250px;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #1a5c1a, #2d8b2d, #1a5c1a);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 5;
+        }
+
+        .stegosaurus {
+            position: absolute;
+            bottom: 260px;
+            left: 150px;
+            width: 120px;
+            height: 80px;
+            z-index: 10;
+            transition: transform 0.1s;
+        }
+
+        .stego-body {
+            position: absolute;
+            bottom: 0;
+            left: 20px;
+            width: 70px;
+            height: 40px;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 50%, #1B5E20 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            box-shadow: 
+                inset -5px -5px 15px rgba(0, 0, 0, 0.3),
+                inset 5px 5px 15px rgba(255, 255, 255, 0.2),
+                0 10px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .stego-neck {
+            position: absolute;
+            bottom: 30px;
+            left: 75px;
+            width: 25px;
+            height: 35px;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 50%, #1B5E20 100%);
+            border-radius: 30% 30% 50% 50%;
+            transform: rotate(-20deg);
+            box-shadow: 
+                inset -3px -3px 10px rgba(0, 0, 0, 0.3),
+                inset 3px 3px 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .stego-head {
+            position: absolute;
+            bottom: 55px;
+            left: 85px;
+            width: 30px;
+            height: 25px;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 50%, #1B5E20 100%);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            box-shadow: 
+                inset -3px -3px 10px rgba(0, 0, 0, 0.3),
+                inset 3px 3px 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .stego-eye {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 6px;
+            height: 6px;
+            background: radial-gradient(circle, #000 0%, #333 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 3px rgba(255, 255, 255, 0.5);
+        }
+
+        .stego-tail {
+            position: absolute;
+            bottom: 10px;
+            left: -10px;
+            width: 40px;
+            height: 20px;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 50%, #1B5E20 100%);
+            border-radius: 50% 0 0 50%;
+            transform: rotate(10deg);
+            box-shadow: 
+                inset -3px -3px 10px rgba(0, 0, 0, 0.3),
+                0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .stego-leg {
+            position: absolute;
+            bottom: -15px;
+            width: 12px;
+            height: 25px;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 50%, #1B5E20 100%);
+            border-radius: 5px;
+            box-shadow: 
+                inset -2px -2px 8px rgba(0, 0, 0, 0.3),
+                0 5px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .leg-front-left { left: 35px; }
+        .leg-front-right { left: 50px; }
+        .leg-back-left { left: 65px; }
+        .leg-back-right { left: 80px; }
+
+        .stego-plates {
+            position: absolute;
+            bottom: 35px;
+            left: 25px;
+            z-index: -1;
+        }
+
+        .plate {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 25px solid #FF6B6B;
+            filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.3));
+        }
+
+        .plate:nth-child(1) { left: 0px; border-bottom-color: #FF6B6B; transform: rotate(-10deg); }
+        .plate:nth-child(2) { left: 12px; border-bottom-color: #FF8E8E; transform: rotate(-5deg); }
+        .plate:nth-child(3) { left: 24px; border-bottom-color: #FFB3B3; transform: rotate(0deg); }
+        .plate:nth-child(4) { left: 36px; border-bottom-color: #FF8E8E; transform: rotate(5deg); }
+        .plate:nth-child(5) { left: 48px; border-bottom-color: #FF6B6B; transform: rotate(10deg); }
+
+        .obstacle {
+            position: absolute;
+            bottom: 250px;
+            z-index: 8;
+        }
+
+        .cactus {
+            position: relative;
+            width: 30px;
+        }
+
+        .cactus-main {
+            position: absolute;
+            bottom: 0;
+            left: 10px;
+            width: 20px;
+            height: 60px;
+            background: linear-gradient(135deg, #228B22 0%, #006400 50%, #004d00 100%);
+            border-radius: 10px 10px 0 0;
+            box-shadow: 
+                inset -5px -5px 15px rgba(0, 0, 0, 0.4),
+                inset 5px 5px 15px rgba(255, 255, 255, 0.1),
+                0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .cactus-arm-left {
+            position: absolute;
+            bottom: 20px;
+            left: -5px;
+            width: 15px;
+            height: 8px;
+            background: linear-gradient(135deg, #228B22 0%, #006400 50%, #004d00 100%);
+            border-radius: 5px 0 0 5px;
+            box-shadow: inset -2px -2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .cactus-arm-right {
+            position: absolute;
+            bottom: 30px;
+            right: -5px;
+            width: 15px;
+            height: 8px;
+            background: linear-gradient(135deg, #228B22 0%, #006400 50%, #004d00 100%);
+            border-radius: 0 5px 5px 0;
+            box-shadow: inset 2px -2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .cactus-top {
+            position: absolute;
+            top: -8px;
+            left: 8px;
+            width: 14px;
+            height: 10px;
+            background: linear-gradient(135deg, #228B22 0%, #006400 50%, #004d00 100%);
+            border-radius: 50% 50% 0 0;
+        }
+
+        .shadow {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            filter: blur(5px);
+            z-index: 6;
+        }
+
+        .stego-shadow {
+            position: absolute;
+            bottom: 245px;
+            left: 155px;
+            width: 100px;
+            height: 20px;
+            background: radial-gradient(ellipse, rgba(0, 0, 0, 0.4) 0%, transparent 70%);
+            z-index: 7;
+            transition: all 0.1s;
+        }
+
+        .score-board {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 20;
+        }
+
+        .score-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .high-score {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 20;
+        }
+
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px 60px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            z-index: 30;
+            display: none;
+        }
+
+        .game-over h2 {
+            font-size: 36px;
+            color: #e74c3c;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-over p {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+        }
+
+        .start-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px 60px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            z-index: 30;
+        }
+
+        .start-message h2 {
+            font-size: 32px;
+            color: #2E7D32;
+            margin-bottom: 20px;
+        }
+
+        .start-message p {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .jumping {
+            animation: jumpAnim 0.6s ease-out;
+        }
+
+        @keyframes jumpAnim {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-120px); }
+            100% { transform: translateY(0); }
+        }
+
+        .running .leg-front-left {
+            animation: runLeg 0.3s infinite alternate;
+        }
+
+        .running .leg-back-right {
+            animation: runLeg 0.3s infinite alternate-reverse;
+        }
+
+        @keyframes runLeg {
+            from { transform: rotate(-15deg); }
+            to { transform: rotate(15deg); }
+        }
+
+        .particles {
+            position: absolute;
+            z-index: 9;
+        }
+
+        .particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, #8B4513, #5D2906);
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <div class="sky"></div>
+        <div class="sun"></div>
+        
+        <div class="score-board">
+            <div class="score-label">SCORE</div>
+            <div class="score-value" id="score">0</div>
+        </div>
+        
+        <div class="high-score">
+            <div class="score-label">HIGH SCORE</div>
+            <div class="score-value" id="highScore">0</div>
+        </div>
+
+        <div class="start-message" id="startMessage">
+            <h2>🦕 Stegosaurus Runner</h2>
+            <p>Press SPACE or Click to Jump</p>
+            <p>Avoid the cacti!</p>
+            <p style="margin-top: 20px; font-size: 14px; color: #999;">Press SPACE to start</p>
+        </div>
+
+        <div class="game-over" id="gameOver">
+            <h2>Game Over!</h2>
+            <p>Your Score: <span id="finalScore">0</span></p>
+            <button class="restart-btn" onclick="restartGame()">Play Again</button>
+        </div>
+
+        <div class="ground-line"></div>
+        <div class="ground"></div>
+
+        <div class="stegosaurus" id="stegosaurus">
+            <div class="stego-tail"></div>
+            <div class="stego-plates">
+                <div class="plate"></div>
+                <div class="plate"></div>
+                <div class="plate"></div>
+                <div class="plate"></div>
+                <div class="plate"></div>
+            </div>
+            <div class="stego-body"></div>
+            <div class="stego-leg leg-back-left"></div>
+            <div class="stego-leg leg-back-right"></div>
+            <div class="stego-leg leg-front-left"></div>
+            <div class="stego-leg leg-front-right"></div>
+            <div class="stego-neck"></div>
+            <div class="stego-head">
+                <div class="stego-eye"></div>
+            </div>
+        </div>
+
+        <div class="stego-shadow" id="stegoShadow"></div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('gameContainer');
+        const stegosaurus = document.getElementById('stegosaurus');
+        const stegoShadow = document.getElementById('stegoShadow');
+        const scoreElement = document.getElementById('score');
+        const highScoreElement = document.getElementById('highScore');
+        const gameOverScreen = document.getElementById('gameOver');
+        const startMessage = document.getElementById('startMessage');
+        const finalScoreElement = document.getElementById('finalScore');
+
+        let isJumping = false;
+        let isGameRunning = false;
+        let isGameOver = false;
+        let score = 0;
+        let highScore = localStorage.getItem('stegoHighScore') || 0;
+        let gameSpeed = 5;
+        let obstacles = [];
+        let clouds = [];
+        let particles = [];
+        let animationId;
+        let obstacleInterval;
+        let cloudInterval;
+
+        highScoreElement.textContent = highScore;
+
+        // Create clouds
+        function createCloud() {
+            const cloud = document.createElement('div');
+            cloud.className = 'cloud';
+            cloud.style.width = Math.random() * 60 + 40 + 'px';
+            cloud.style.height = Math.random() * 20 + 15 + 'px';
+            cloud.style.top = Math.random() * 100 + 20 + 'px';
+            cloud.style.animationDuration = Math.random() * 10 + 15 + 's';
+            gameContainer.appendChild(cloud);
+            clouds.push(cloud);
+
+            setTimeout(() => {
+                cloud.remove();
+                clouds = clouds.filter(c => c !== cloud);
+            }, 25000);
+        }
+
+        // Create obstacle (cactus)
+        function createObstacle() {
+            if (isGameOver) return;
+
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle';
+            
+            const cactus = document.createElement('div');
+            cactus.className = 'cactus';
+            
+            const cactusMain = document.createElement('div');
+            cactusMain.className = 'cactus-main';
+            
+            const cactusArmLeft = document.createElement('div');
+            cactusArmLeft.className = 'cactus-arm-left';
+            
+            const cactusArmRight = document.createElement('div');
+            cactusArmRight.className = 'cactus-arm-right';
+            
+            const cactusTop = document.createElement('div');
+            cactusTop.className = 'cactus-top';
+
+            cactus.appendChild(cactusMain);
+            cactus.appendChild(cactusArmLeft);
+            cactus.appendChild(cactusArmRight);
+            cactus.appendChild(cactusTop);
+            obstacle.appendChild(cactus);
+            
+            obstacle.style.left = '900px';
+            gameContainer.appendChild(obstacle);
+            obstacles.push(obstacle);
+
+            // Add shadow for obstacle
+            const shadow = document.createElement('div');
+            shadow.className = 'shadow';
+            shadow.style.width = '25px';
+            shadow.style.height = '8px';
+            shadow.style.bottom = '245px';
+            shadow.style.left = '902px';
+            gameContainer.appendChild(shadow);
+            obstacle.shadow = shadow;
+        }
+
+        // Create ground particles
+        function createParticle(x, y) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = x + 'px';
+            particle.style.bottom = y + 'px';
+            gameContainer.appendChild(particle);
+            particles.push({ element: particle, x: x, y: y, vx: -gameSpeed, vy: Math.random() * 2 + 1 });
+        }
+
+        // Jump function
+        function jump() {
+            if (!isGameRunning && !isGameOver) {
+                startGame();
+                return;
+            }
+
+            if (isJumping || isGameOver) return;
+
+            isJumping = true;
+            stegosaurus.classList.add('jumping');
+            stegosaurus.classList.remove('running');
+
+            let jumpHeight = 0;
+            let velocity = 15;
+            const gravity = 0.8;
+
+            const jumpInterval = setInterval(() => {
+                velocity -= gravity;
+                jumpHeight += velocity;
+
+                if (jumpHeight <= 0) {
+                    jumpHeight = 0;
+                    velocity = 0;
+                    clearInterval(jumpInterval);
+                    isJumping = false;
+                    stegosaurus.classList.remove('jumping');
+                    if (isGameRunning) {
+                        stegosaurus.classList.add('running');
+                    }
+                }
+
+                stegosaurus.style.transform = `translateY(${-jumpHeight}px)`;
+                
+                // Adjust shadow based on jump height
+                const shadowScale = 1 - (jumpHeight / 200);
+                const shadowOffset = jumpHeight * 0.3;
+                stegoShadow.style.transform = `scale(${shadowScale})`;
+                stegoShadow.style.opacity = 0.4 * shadowScale;
+
+            }, 20);
+        }
+
+        // Start game
+        function startGame() {
+            isGameRunning = true;
+            startMessage.style.display = 'none';
+            stegosaurus.classList.add('running');
+            
+            // Create initial clouds
+            for (let i = 0; i < 3; i++) {
+                setTimeout(createCloud, i * 2000);
+            }
+
+            cloudInterval = setInterval(createCloud, 3000);
+
+            // Start obstacle generation
+            scheduleNextObstacle();
+
+            // Start game loop
+            gameLoop();
+        }
+
+        // Schedule next obstacle
+        function scheduleNextObstacle() {
+            if (isGameOver) return;
+            
+            const randomDelay = Math.random() * 1000 + 1500;
+            obstacleInterval = setTimeout(() => {
+                createObstacle();
+                scheduleNextObstacle();
+            }, randomDelay);
+        }
+
+        // Check collision
+        function checkCollision(obstacle) {
+            const stegoRect = stegosaurus.getBoundingClientRect();
+            const obsRect = obstacle.getBoundingClientRect();
+
+            // Adjust hitbox for more forgiving collision
+            const stegoHitbox = {
+                left: stegoRect.left + 20,
+                right: stegoRect.right - 20,
+                top: stegoRect.top + 20,
+                bottom: stegoRect.bottom
+            };
+
+            const obsHitbox = {
+                left: obsRect.left + 5,
+                right: obsRect.right - 5,
+                top: obsRect.top + 10,
+                bottom: obsRect.bottom
+            };
+
+            return !(
+                stegoHitbox.right < obsHitbox.left ||
+                stegoHitbox.left > obsHitbox.right ||
+                stegoHitbox.bottom < obsHitbox.top ||
+                stegoHitbox.top > obsHitbox.bottom
+            );
+        }
+
+        // Game over
+        function gameOver() {
+            isGameOver = true;
+            isGameRunning = false;
+            stegosaurus.classList.remove('running');
+            
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('stegoHighScore', highScore);
+                highScoreElement.textContent = highScore;
+            }
+
+            finalScoreElement.textContent = score;
+            gameOverScreen.style.display = 'block';
+
+            clearTimeout(obstacleInterval);
+            clearInterval(cloudInterval);
+            cancelAnimationFrame(animationId);
+        }
+
+        // Restart game
+        function restartGame() {
+            // Clear all obstacles
+            obstacles.forEach(obs => {
+                if (obs.shadow) obs.shadow.remove();
+                obs.remove();
+            });
+            obstacles = [];
+
+            // Clear particles
+            particles.forEach(p => p.element.remove());
+            particles = [];
+
+            // Reset variables
+            score = 0;
+            gameSpeed = 5;
+            isGameOver = false;
+            isJumping = false;
+            stegosaurus.style.transform = 'translateY(0)';
+            stegoShadow.style.transform = 'scale(1)';
+            stegoShadow.style.opacity = '0.4';
+            scoreElement.textContent = '0';
+            gameOverScreen.style.display = 'none';
+
+            // Start game
+            startGame();
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (isGameOver) return;
+
+            // Update score
+            score++;
+            scoreElement.textContent = Math.floor(score / 10);
+
+            // Increase speed gradually
+            if (score % 500 === 0) {
+                gameSpeed += 0.5;
+            }
+
+            // Move obstacles
+            obstacles.forEach((obstacle, index) => {
+                const currentLeft = parseFloat(obstacle.style.left);
+                obstacle.style.left = (currentLeft - gameSpeed) + 'px';
+
+                // Move shadow
+                if (obstacle.shadow) {
+                    const shadowLeft = parseFloat(obstacle.shadow.style.left);
+                    obstacle.shadow.style.left = (shadowLeft - gameSpeed) + 'px';
+                }
+
+                // Check collision
+                if (checkCollision(obstacle)) {
+                    gameOver();
+                    return;
+                }
+
+                // Remove off-screen obstacles
+                if (currentLeft < -50) {
+                    if (obstacle.shadow) obstacle.shadow.remove();
+                    obstacle.remove();
+                    obstacles.splice(index, 1);
+                }
+            });
+
+            // Update particles
+            particles.forEach((p, index) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy -= 0.1; // gravity
+                
+                p.element.style.left = p.x + 'px';
+                p.element.style.bottom = p.y + 'px';
+
+                if (p.y <= 0 || p.x < 0) {
+                    p.element.remove();
+                    particles.splice(index, 1);
+                }
+            });
+
+            // Create particles when running
+            if (isGameRunning && !isJumping && score % 5 === 0) {
+                createParticle(140, 10);
+            }
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                jump();
+            }
+        });
+
+        gameContainer.addEventListener('click', (e) => {
+            if (e.target !== gameOverScreen && e.target.tagName !== 'BUTTON') {
+                jump();
+            }
+        });
+
+        // Initialize with some clouds
+        setTimeout(createCloud, 500);
+        setTimeout(createCloud, 1500);
+        setTimeout(createCloud, 2500);
+    </script>
+</body>
+</html>
